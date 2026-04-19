@@ -1,96 +1,135 @@
-# Spam Detector — Naive Bayes (Pure Python)
+# 📧 Email Spam Detector
 
-A complete spam/ham email classifier built from scratch using
-Multinomial Naive Bayes. **No scikit-learn, no NLTK — only the
-Python standard library.**
+A machine learning web app that detects spam emails using a **Multinomial Naive Bayes** classifier built entirely from scratch — no scikit-learn, no NLTK, only pure Python.
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat&logo=flask&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-live-FF4B4B?style=flat&logo=streamlit&logoColor=white)
+![Accuracy](https://img.shields.io/badge/Accuracy-97.31%25-brightgreen?style=flat)
 
 ---
 
-## Project Structure
+## 🚀 Live Demo
+
+👉 **[Try it here](https://your-app.streamlit.app)** ← replace with your Streamlit link
+
+---
+
+## ✨ Features
+
+- ✅ Classifies any email or sentence as **spam** or **not spam**
+- ✅ Shows **spam vs ham probability** with visual bars
+- ✅ Highlights the **key words** that triggered the decision
+- ✅ Built from scratch — every algorithm written in pure Python
+- ✅ Trained on the **UCI SMS Spam Collection** (5,574 real emails)
+- ✅ **97.31% accuracy** on the test set
+
+---
+
+## 🧠 How It Works
+
+Naive Bayes asks: *given the words in this email, which is more likely — spam or ham?*
 
 ```
-spam_detector/
-├── main.py               ← one-click setup + run
-├── predict.py            ← interactive predictor (use after training)
+P(spam | email) ∝ P(spam) × P(w₁|spam) × P(w₂|spam) × ... × P(wₙ|spam)
+P(ham  | email) ∝ P(ham)  × P(w₁|ham)  × P(w₂|ham)  × ... × P(wₙ|ham)
+```
+
+The class with the higher probability wins. To avoid floating-point underflow from multiplying thousands of tiny numbers, all calculations are done in **log-space**.
+
+**Pipeline:**
+
+```
+Raw email → Lowercase → Remove URLs & punctuation → Tokenise
+         → Remove stop words → Stem → Vectorise → Naive Bayes → Verdict
+```
+
+---
+
+## 📁 Project Structure
+
+```
+email-spam-detector/
+│
+├── streamlit_app.py        ← Streamlit web app (deployed)
+├── app.py                  ← Flask web app (run locally)
+├── main.py                 ← One-click local setup + run
+├── predict.py              ← CLI predictor
+├── requirements.txt
 │
 ├── data/
-│   ├── prepare_data.py   ← downloads dataset (or generates sample)
-│   └── spam.csv          ← created by prepare_data.py
+│   ├── prepare_data.py     ← Downloads & prepares the dataset
+│   └── spam.csv            ← Generated after running prepare_data.py
 │
 ├── model/
-│   ├── train.py          ← training script + CountVectorizer + NB
-│   ├── naive_bayes.pkl   ← saved model (created after training)
-│   └── vectorizer.pkl    ← saved vectorizer (created after training)
+│   ├── train.py            ← CountVectorizer + Naive Bayes from scratch
+│   ├── naive_bayes.pkl     ← Saved model (generated after training)
+│   └── vectorizer.pkl      ← Saved vectorizer (generated after training)
 │
-└── utils/
-    └── text_processing.py ← cleaning, tokenisation, stemming
+├── utils/
+│   └── text_processing.py  ← Cleaning, tokenisation, stemming
+│
+└── templates/
+    └── index.html          ← Flask frontend
 ```
 
 ---
 
-## Quick Start
+## ⚙️ Run Locally
 
-### 1. Open in PyCharm
-File → Open → select the `spam_detector/` folder.
-
-### 2. Run everything at once
+**1. Clone the repo**
+```bash
+git clone https://github.com/QaziMahadAhmad/email-spam-detector.git
+cd email-spam-detector
 ```
+
+**2. Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+**3. Run everything at once**
+```bash
 python main.py
 ```
-This will:
-1. Download / generate the dataset
-2. Train the model and print evaluation metrics
-3. Launch the interactive predictor
 
-### 3. Or run steps individually
+This will automatically download the dataset, train the model, and launch the web app at `http://127.0.0.1:5000`.
+
+**Or run steps individually:**
 ```bash
-# Step 1 — prepare data
-python data/prepare_data.py
-
-# Step 2 — train
-python model/train.py
-
-# Step 3 — predict interactively
-python predict.py
-
-# Step 3b — single command-line check
-python predict.py "Congratulations, you won a free prize!"
+python data/prepare_data.py   # download & prepare dataset
+python model/train.py         # train the model
+python app.py                 # start Flask web server
 ```
 
 ---
 
-## How Naive Bayes Works Here
+## 📊 Model Performance
 
-```
-P(spam | email) ∝ P(spam) × ∏ P(word | spam)
-P(ham  | email) ∝ P(ham)  × ∏ P(word | ham)
-```
+Trained on 5,574 emails from the UCI SMS Spam Collection dataset.
 
-1. **Training** — count how often each word appears in spam vs ham
-   messages and compute log-probabilities (Laplace-smoothed).
-2. **Prediction** — for a new email, multiply its word probabilities
-   under each class and pick the winner (argmax).
-3. **Log-space** — all multiplications are done in log-space to
-   prevent floating-point underflow.
+| Class | Precision | Recall | F1 Score |
+|-------|-----------|--------|----------|
+| Ham   | 98.63%    | 98.22% | 98.43%   |
+| Spam  | 89.57%    | 91.82% | 90.68%   |
+| **Overall** | — | — | **97.31%** |
 
 ---
 
-## Getting a Larger Dataset
+## 🛠️ Built With
 
-The built-in sample (20 emails) is enough to verify the code.
-For real accuracy (~97 %+) use the full SMS Spam Collection:
-
-1. Download from https://archive.ics.uci.edu/dataset/228/sms+spam+collection
-2. Extract `SMSSpamCollection` into `data/`
-3. Re-run `python data/prepare_data.py` (it will convert TSV → CSV)
-4. Re-train with `python model/train.py`
+| Component | Technology |
+|-----------|-----------|
+| Language | Python 3.10+ |
+| Web framework | Flask + Streamlit |
+| ML algorithm | Multinomial Naive Bayes (from scratch) |
+| Vectoriser | Bag-of-Words CountVectorizer (from scratch) |
+| Dataset | UCI SMS Spam Collection (5,574 emails) |
+| Deployment | Streamlit Cloud |
 
 ---
 
-## Key Files Explained
+## 👤 Author
 
-| File | What it does |
-|------|-------------|
-| `utils/text_processing.py` | lowercase → remove URLs/punctuation → remove stop words → simple stemmer |
-| `model/train.py` | `CountVectorizer` (bag-of-words), `MultinomialNaiveBayes`, train/test split, evaluation |
-| `predict.py` | loads saved model, cleans input, prints probability bar chart |
+**Mahad Ahmad**
+- GitHub: [@QaziMahadAhmad](https://github.com/QaziMahadAhmad)
