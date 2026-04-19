@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SpamScan — Naive Bayes Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0a0a0f;
+  --surface:   #111118;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.13);
+  --text:      #e8e8f0;
+  --muted:     #6b6b80;
+  --accent:    #c8ff00;
+  --accent2:   #ff4d6d;
+  --spam-clr:  #ff4d6d;
+  --ham-clr:   #c8ff00;
+  --radius:    14px;
+  --radius-sm: 8px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 60px;
+  overflow-x: hidden;
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* ── Glow blobs ── */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+.blob-1 { width: 500px; height: 500px; background: rgba(200,255,0,0.04); top: -100px; left: -100px; }
+.blob-2 { width: 400px; height: 400px; background: rgba(255,77,109,0.05); bottom: -80px; right: -80px; }
+
+/* ── Layout ── */
+.wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40px 0 48px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 38px; height: 38px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-icon svg { width: 20px; height: 20px; }
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.logo-text span { color: var(--accent); }
+
+.badge {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+  border-radius: 30px;
+  padding: 5px 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Headline ── */
+.headline {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 7vw, 58px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.headline em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.subline {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 44px;
+  max-width: 480px;
+}
+
+/* ── Input card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 28px;
+  transition: border-color 0.3s;
+}
+
+.card:focus-within { border-color: var(--border2); }
+
+.card-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+  min-height: 140px;
+  caret-color: var(--accent);
+}
+
+textarea::placeholder { color: var(--muted); }
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── Submit button ── */
+.btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #000;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s, transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn .spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.btn.loading .spinner { display: block; }
+.btn.loading .btn-text { display: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Example pills ── */
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+
+.example-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  align-self: center;
+  margin-right: 4px;
+}
+
+.pill {
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+  border-radius: 30px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.pill:hover {
+  color: var(--text);
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── Result panel ── */
+#result {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+
+#result.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ── Verdict banner ── */
+.verdict {
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+.verdict.spam {
+  background: rgba(255,77,109,0.08);
+  border-color: rgba(255,77,109,0.2);
+}
+.verdict.ham {
+  background: rgba(200,255,0,0.06);
+  border-color: rgba(200,255,0,0.18);
+}
+
+.verdict-icon {
+  font-size: 44px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.verdict-info { flex: 1; }
+
+.verdict-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.verdict.spam .verdict-label { color: var(--spam-clr); }
+.verdict.ham  .verdict-label { color: var(--ham-clr); }
+
+.verdict-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.confidence-badge {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+}
+
+.verdict.spam .confidence-badge { color: var(--spam-clr); }
+.verdict.ham  .confidence-badge { color: var(--ham-clr); }
+
+/* ── Probability bars ── */
+.prob-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.prob-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+}
+
+.prob-box-label {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.prob-bar-bg {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+
+.prob-bar-fill.spam { background: var(--spam-clr); }
+.prob-bar-fill.ham  { background: var(--ham-clr); }
+
+.prob-pct {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.prob-box.spam-box .prob-pct { color: var(--spam-clr); }
+.prob-box.ham-box  .prob-pct { color: var(--ham-clr); }
+
+/* ── Details row ── */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+}
+
+.detail-box-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.detail-box-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── Key words ── */
+.words-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.words-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+}
+
+.words-box-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.word-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.word-pill {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+}
+
+.word-pill.spam-word {
+  color: var(--spam-clr);
+  background: rgba(255,77,109,0.08);
+  border-color: rgba(255,77,109,0.2);
+}
+
+.word-pill.ham-word {
+  color: var(--ham-clr);
+  background: rgba(200,255,0,0.06);
+  border-color: rgba(200,255,0,0.18);
+}
+
+.word-pill.none {
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+/* ── Cleaned text ── */
+.cleaned-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  margin-bottom: 28px;
+}
+
+.cleaned-box-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.cleaned-text-val {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  word-break: break-word;
+}
+
+/* ── Try again ── */
+.try-again {
+  text-align: center;
+}
+
+.try-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.try-btn:hover {
+  color: var(--text);
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* ── Footer ── */
+footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  position: relative;
+  z-index: 1;
+}
+
+footer a { color: var(--muted); text-decoration: underline; }
+
+/* ── Scan line animation on verdict ── */
+@keyframes scan {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.verdict::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+  animation: scan 1.2s ease-out forwards;
+}
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+      <span class="logo-text">Spam<span>Scan</span></span>
+    </div>
+    <span class="badge">Naive Bayes · v1.0</span>
+  </header>
+
+  <!-- Hero text -->
+  <div class="headline">Is this email<br/><em>spam?</em></div>
+  <p class="subline">Paste any email or sentence below. The Multinomial Naive Bayes model analyses word probabilities and returns a verdict instantly.</p>
+
+  <!-- Input card -->
+  <div class="card" id="input-section">
+    <div class="card-label">Email / Message</div>
+    <textarea id="email-input" placeholder="Paste your email content here…&#10;&#10;e.g. &quot;Congratulations! You have won a free iPhone. Click now to claim.&quot;" spellcheck="false"></textarea>
+    <div class="card-footer">
+      <span class="char-count" id="char-count">0 characters</span>
+      <button class="btn" id="scan-btn" onclick="runScan()">
+        <div class="spinner"></div>
+        <span class="btn-text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Scan Email
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Example pills -->
+  <div class="examples">
+    <span class="example-label">Try:</span>
+    <span class="pill" onclick="loadExample('spam1')">🚨 Win a free prize</span>
+    <span class="pill" onclick="loadExample('spam2')">🚨 Account suspended</span>
+    <span class="pill" onclick="loadExample('spam3')">🚨 Investment offer</span>
+    <span class="pill" onclick="loadExample('ham1')">✅ Meeting tomorrow</span>
+    <span class="pill" onclick="loadExample('ham2')">✅ Homework notes</span>
+  </div>
+
+  <!-- Result panel -->
+  <div id="result">
+
+    <!-- Verdict banner -->
+    <div class="verdict" id="verdict-banner">
+      <div class="verdict-icon" id="verdict-icon"></div>
+      <div class="verdict-info">
+        <div class="verdict-label" id="verdict-label"></div>
+        <div class="verdict-sub" id="verdict-sub"></div>
+      </div>
+      <div class="confidence-badge" id="confidence-badge"></div>
+    </div>
+
+    <!-- Probability bars -->
+    <div class="prob-grid">
+      <div class="prob-box spam-box">
+        <div class="prob-box-label">Spam probability</div>
+        <div class="prob-bar-bg"><div class="prob-bar-fill spam" id="spam-bar"></div></div>
+        <div class="prob-pct" id="spam-pct">—</div>
+      </div>
+      <div class="prob-box ham-box">
+        <div class="prob-box-label">Ham probability</div>
+        <div class="prob-bar-bg"><div class="prob-bar-fill ham" id="ham-bar"></div></div>
+        <div class="prob-pct" id="ham-pct">—</div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="details-grid">
+      <div class="detail-box">
+        <div class="detail-box-label">Words</div>
+        <div class="detail-box-val" id="word-count">—</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-box-label">Characters</div>
+        <div class="detail-box-val" id="char-count-res">—</div>
+      </div>
+      <div class="detail-box">
+        <div class="detail-box-label">Features used</div>
+        <div class="detail-box-val" id="feature-count">—</div>
+      </div>
+    </div>
+
+    <!-- Key words -->
+    <div class="words-grid">
+      <div class="words-box">
+        <div class="words-box-label">🚨 Top spam signals</div>
+        <div class="word-pills" id="spam-words"></div>
+      </div>
+      <div class="words-box">
+        <div class="words-box-label">✅ Top ham signals</div>
+        <div class="word-pills" id="ham-words"></div>
+      </div>
+    </div>
+
+    <!-- Cleaned text -->
+    <div class="cleaned-box">
+      <div class="cleaned-box-label">Processed text (what the model sees)</div>
+      <div class="cleaned-text-val" id="cleaned-text-val"></div>
+    </div>
+
+    <!-- Try again -->
+    <div class="try-again">
+      <button class="try-btn" onclick="reset()">← Check another email</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Built with <strong>Pure Python Naive Bayes</strong> + Flask &nbsp;·&nbsp; No external ML libraries
+</footer>
+
+<script>
+const EXAMPLES = {
+  spam1: "Congratulations! You have been selected to win a FREE iPhone 15. Click here NOW to claim your prize before it expires! Limited time offer!!!",
+  spam2: "URGENT: Your account has been suspended due to suspicious activity. Verify your bank details immediately at this link or lose access forever.",
+  spam3: "Exclusive investment opportunity! Double your money in 30 days. Guaranteed returns of 500%. Send $500 now and watch your wealth grow. Act fast!",
+  ham1:  "Hey, are we still on for the team meeting tomorrow at 10am? Let me know if you need the Zoom link again.",
+  ham2:  "Can you please send me the notes from yesterday's lecture? I missed the last 15 minutes and want to make sure I have everything for the exam.",
+};
+
+const textarea   = document.getElementById('email-input');
+const charCount  = document.getElementById('char-count');
+const scanBtn    = document.getElementById('scan-btn');
+const resultDiv  = document.getElementById('result');
+const inputSec   = document.getElementById('input-section');
+
+textarea.addEventListener('input', () => {
+  const n = textarea.value.length;
+  charCount.textContent = n + ' character' + (n !== 1 ? 's' : '');
+});
+
+function loadExample(key) {
+  textarea.value = EXAMPLES[key];
+  textarea.dispatchEvent(new Event('input'));
+  textarea.focus();
+}
+
+async function runScan() {
+  const text = textarea.value.trim();
+  if (!text) { textarea.focus(); return; }
+
+  scanBtn.disabled = true;
+  scanBtn.classList.add('loading');
+
+  try {
+    const res  = await fetch('/predict', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    showResult(data);
+  } catch(e) {
+    alert('Server error: ' + e.message);
+  } finally {
+    scanBtn.disabled = false;
+    scanBtn.classList.remove('loading');
+  }
+}
+
+function showResult(d) {
+  const isSpam = d.label === 'spam';
+
+  // Verdict banner
+  const banner = document.getElementById('verdict-banner');
+  banner.className = 'verdict ' + d.label;
+  document.getElementById('verdict-icon').textContent  = isSpam ? '🚨' : '✅';
+  document.getElementById('verdict-label').textContent = isSpam ? 'SPAM DETECTED' : 'NOT SPAM';
+  document.getElementById('verdict-sub').textContent   = isSpam
+    ? 'This message shows strong spam characteristics.'
+    : 'This message appears to be a legitimate email.';
+  document.getElementById('confidence-badge').textContent = (isSpam ? d.spam_pct : d.ham_pct) + '%';
+
+  // Bars (animate after small delay)
+  const spamBar = document.getElementById('spam-bar');
+  const hamBar  = document.getElementById('ham-bar');
+  spamBar.style.width = '0%';
+  hamBar.style.width  = '0%';
+  document.getElementById('spam-pct').textContent = d.spam_pct + '%';
+  document.getElementById('ham-pct').textContent  = d.ham_pct  + '%';
+  setTimeout(() => {
+    spamBar.style.width = d.spam_pct + '%';
+    hamBar.style.width  = d.ham_pct  + '%';
+  }, 80);
+
+  // Stats
+  document.getElementById('word-count').textContent    = d.word_count;
+  document.getElementById('char-count-res').textContent = d.char_count;
+  document.getElementById('feature-count').textContent  = d.cleaned_text.split(' ').filter(Boolean).length;
+
+  // Key words
+  renderWords('spam-words', d.top_spam_words, 'spam-word');
+  renderWords('ham-words',  d.top_ham_words,  'ham-word');
+
+  // Cleaned text
+  document.getElementById('cleaned-text-val').textContent = d.cleaned_text || '(no recognisable tokens)';
+
+  // Swap views
+  inputSec.style.display  = 'none';
+  document.querySelector('.examples').style.display = 'none';
+  resultDiv.classList.add('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderWords(containerId, words, cls) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  if (!words || words.length === 0) {
+    el.innerHTML = '<span class="word-pill none">none found</span>';
+    return;
+  }
+  words.forEach(w => {
+    const s = document.createElement('span');
+    s.className = 'word-pill ' + cls;
+    s.textContent = w;
+    el.appendChild(s);
+  });
+}
+
+function reset() {
+  resultDiv.classList.remove('visible');
+  inputSec.style.display  = '';
+  document.querySelector('.examples').style.display = '';
+  textarea.value = '';
+  charCount.textContent = '0 characters';
+  setTimeout(() => textarea.focus(), 50);
+}
+
+// Allow Ctrl+Enter to submit
+textarea.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runScan();
+});
+</script>
+</body>
+</html>
