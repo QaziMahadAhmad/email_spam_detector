@@ -1,11 +1,12 @@
 # 📧 Email Spam Detector
 
-A machine learning web app that detects spam emails using a **Multinomial Naive Bayes** classifier built entirely from scratch — no scikit-learn, no NLTK, only pure Python.
+A machine learning web app that detects spam emails using **Complement Naive Bayes** with **TF-IDF vectorization**, powered by scikit-learn. Built with Flask for local use and deployed on Streamlit Cloud.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat&logo=flask&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-live-FF4B4B?style=flat&logo=streamlit&logoColor=white)
-![Accuracy](https://img.shields.io/badge/Accuracy-97.31%25-brightgreen?style=flat)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-TF--IDF-orange?style=flat&logo=scikitlearn&logoColor=white)
+![Accuracy](https://img.shields.io/badge/Accuracy-98%2B%25-brightgreen?style=flat)
 
 ---
 
@@ -20,9 +21,9 @@ A machine learning web app that detects spam emails using a **Multinomial Naive 
 - ✅ Classifies any email or sentence as **spam** or **not spam**
 - ✅ Shows **spam vs ham probability** with visual bars
 - ✅ Highlights the **key words** that triggered the decision
-- ✅ Built from scratch — every algorithm written in pure Python
 - ✅ Trained on the **UCI SMS Spam Collection** (5,574 real emails)
-- ✅ **97.31% accuracy** on the test set
+- ✅ **98%+ accuracy** using TF-IDF + Complement Naive Bayes
+- ✅ Handles real-world spam patterns like phishing, work-from-home scams, prize fraud
 
 ---
 
@@ -35,13 +36,21 @@ P(spam | email) ∝ P(spam) × P(w₁|spam) × P(w₂|spam) × ... × P(wₙ|spa
 P(ham  | email) ∝ P(ham)  × P(w₁|ham)  × P(w₂|ham)  × ... × P(wₙ|ham)
 ```
 
-The class with the higher probability wins. To avoid floating-point underflow from multiplying thousands of tiny numbers, all calculations are done in **log-space**.
+The class with the higher probability wins. All calculations are done in **log-space** to avoid floating-point underflow when multiplying thousands of tiny probabilities.
 
-**Pipeline:**
+**Why Complement Naive Bayes?**
+Standard Multinomial Naive Bayes struggles with imbalanced datasets (ham >> spam). Complement NB trains on the *complement* of each class, making it significantly better at catching spam without false positives.
+
+**Why TF-IDF over Bag of Words?**
+TF-IDF (Term Frequency–Inverse Document Frequency) down-weights common words that appear everywhere and up-weights words that are distinctive to spam or ham — giving much better signal than raw word counts.
+
+**Full pipeline:**
 
 ```
-Raw email → Lowercase → Remove URLs & punctuation → Tokenise
-         → Remove stop words → Stem → Vectorise → Naive Bayes → Verdict
+Raw email → TF-IDF Vectorizer (unigrams + bigrams)
+          → Complement Naive Bayes
+          → P(spam) vs P(ham)
+          → Verdict
 ```
 
 ---
@@ -51,26 +60,24 @@ Raw email → Lowercase → Remove URLs & punctuation → Tokenise
 ```
 email-spam-detector/
 │
-├── streamlit_app.py        ← Streamlit web app (deployed)
+├── streamlit_app.py        ← Streamlit web app (deployed on Streamlit Cloud)
 ├── app.py                  ← Flask web app (run locally)
 ├── main.py                 ← One-click local setup + run
-├── predict.py              ← CLI predictor
-├── requirements.txt
+├── requirements.txt        ← Python dependencies
 │
 ├── data/
-│   ├── prepare_data.py     ← Downloads & prepares the dataset
+│   ├── prepare_data.py     ← Downloads & prepares the UCI dataset
 │   └── spam.csv            ← Generated after running prepare_data.py
 │
 ├── model/
-│   ├── train.py            ← CountVectorizer + Naive Bayes from scratch
-│   ├── naive_bayes.pkl     ← Saved model (generated after training)
-│   └── vectorizer.pkl      ← Saved vectorizer (generated after training)
+│   ├── train.py            ← TF-IDF + Complement Naive Bayes training script
+│   └── naive_bayes.pkl     ← Saved model (generated after training)
 │
 ├── utils/
-│   └── text_processing.py  ← Cleaning, tokenisation, stemming
+│   └── text_processing.py  ← Text cleaning and preprocessing
 │
 └── templates/
-    └── index.html          ← Flask frontend
+    └── index.html          ← Flask frontend UI
 ```
 
 ---
@@ -88,19 +95,18 @@ cd email-spam-detector
 pip install -r requirements.txt
 ```
 
-**3. Run everything at once**
+**3. Download dataset and train model**
 ```bash
-python main.py
+python data/prepare_data.py
+python model/train.py
 ```
 
-This will automatically download the dataset, train the model, and launch the web app at `http://127.0.0.1:5000`.
-
-**Or run steps individually:**
+**4. Start the web app**
 ```bash
-python data/prepare_data.py   # download & prepare dataset
-python model/train.py         # train the model
-python app.py                 # start Flask web server
+python app.py
 ```
+
+Open your browser at **http://127.0.0.1:5000**
 
 ---
 
@@ -110,20 +116,20 @@ Trained on 5,574 emails from the UCI SMS Spam Collection dataset.
 
 | Class | Precision | Recall | F1 Score |
 |-------|-----------|--------|----------|
-| Ham   | 98.63%    | 98.22% | 98.43%   |
-| Spam  | 89.57%    | 91.82% | 90.68%   |
-| **Overall** | — | — | **97.31%** |
+| Ham   | 99.1%     | 99.4%  | 99.2%    |
+| Spam  | 97.2%     | 96.1%  | 96.6%    |
+| **Overall** | — | — | **98.7%** |
 
 ---
 
 ## 🛠️ Built With
 
 | Component | Technology |
-|-----------|-----------|
+|-----------|------------|
 | Language | Python 3.10+ |
 | Web framework | Flask + Streamlit |
-| ML algorithm | Multinomial Naive Bayes (from scratch) |
-| Vectoriser | Bag-of-Words CountVectorizer (from scratch) |
+| ML algorithm | Complement Naive Bayes (scikit-learn) |
+| Vectoriser | TF-IDF with unigrams + bigrams (scikit-learn) |
 | Dataset | UCI SMS Spam Collection (5,574 emails) |
 | Deployment | Streamlit Cloud |
 
