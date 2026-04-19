@@ -39,6 +39,14 @@ BUILTIN_SAMPLES = [
     ("spam", "Your loan is approved! Click this link to receive your cash."),
     ("spam", "Limited time offer: Buy 1 get 5 FREE! Order now!"),
     ("spam", "You have been chosen! Send your bank details to claim prize."),
+    ("spam", "Work from home and earn 5000 weekly. No experience needed. Sign up now!"),
+    ("spam", "Earn money from home today. Limited slots available. Join now instantly."),
+    ("spam", "Make money online working from home. Weekly payments guaranteed. Start now!"),
+    ("spam", "Work at home opportunity. Earn 500 daily. No experience required. Apply now!"),
+    ("spam", "Start earning from home today. Sign up and make money instantly. Free to join!"),
+    ("spam", "Home based job. Earn weekly. No experience needed. Limited slots. Apply today!"),
+    ("spam", "Get paid weekly working from home. Earn 1000 per day. Sign up free now!"),
+    ("spam", "Make extra income from home. Weekly salary. No skills needed. Join today free!"),
 ]
 
 

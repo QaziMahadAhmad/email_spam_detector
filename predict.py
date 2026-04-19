@@ -35,29 +35,29 @@ def load_model():
     return model, vectorizer
 
 
-def predict(text: str, model, vectorizer) -> dict:
-    """
-    Returns a dict with:
-      - label        : "spam" or "ham"
-      - spam_pct     : spam probability as a percentage
-      - ham_pct      : ham probability as a percentage
-      - cleaned_text : what the model actually sees
-    """
-    cleaned = clean_text(text)
-    X = vectorizer.transform([cleaned])
-    proba = model.predict_proba(X)[0]
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json(force=True)
+    text = data.get("text", "").strip()
+    if not text:
+        return jsonify({"error": "Empty input"}), 400
 
-    label    = max(proba, key=proba.get)
-    spam_pct = proba.get("spam", 0) * 100
-    ham_pct  = proba.get("ham",  0) * 100
+    proba   = MODEL.predict_proba([text])[0]
+    classes = MODEL.classes_
+    spam_pct = round(proba[list(classes).index("spam")] * 100, 1)
+    ham_pct  = round(proba[list(classes).index("ham")]  * 100, 1)
+    label    = "spam" if spam_pct > ham_pct else "ham"
 
-    return {
-        "label":        label,
-        "spam_pct":     spam_pct,
-        "ham_pct":      ham_pct,
-        "cleaned_text": cleaned,
-    }
-
+    return jsonify({
+        "label":          label,
+        "spam_pct":       spam_pct,
+        "ham_pct":        ham_pct,
+        "cleaned_text":   text,
+        "top_spam_words": [],
+        "top_ham_words":  [],
+        "word_count":     len(text.split()),
+        "char_count":     len(text),
+    })
 
 def print_result(text: str, result: dict):
     bar_len = 30
