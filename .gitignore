@@ -1,2 +1,3 @@
 model/naive_bayes.pkl
 model/vectorizer.pkl
+__pycache__/
