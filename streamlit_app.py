@@ -137,26 +137,11 @@ def top_words(cleaned_text, cls, model, vectorizer, n=5):
 st.markdown('<div class="title">Is this email <span>spam?</span></div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Multinomial Naive Bayes · Pure Python · No external ML libraries</div>', unsafe_allow_html=True)
 
-# ── Example buttons ──────────────────────────────────────────────────────────
-st.markdown('<div class="section-label">Try an example</div>', unsafe_allow_html=True)
-
-examples = {
-    "🚨 Free prize":       "Congratulations! You have been selected to win a FREE iPhone. Click here NOW to claim your prize!!!",
-    "🚨 Account suspended":"URGENT: Your account has been suspended. Verify your bank details immediately or lose access forever.",
-    "✅ Meeting tomorrow":  "Hey, are we still on for the team meeting tomorrow at 10am? Let me know if you need the Zoom link.",
-    "✅ Homework notes":    "Can you please send me the notes from yesterday's lecture? I missed the last 15 minutes.",
-}
-
-cols = st.columns(4)
-selected_example = ""
-for i, (label, text) in enumerate(examples.items()):
-    if cols[i].button(label, use_container_width=True):
-        selected_example = text
 
 # ── Text input ───────────────────────────────────────────────────────────────
 email_input = st.text_area(
     "Email / Message",
-    value=selected_example,
+    value="",
     height=160,
     placeholder='Paste your email here…\n\ne.g. "Win a free vacation! Click now to claim your reward."',
     label_visibility="collapsed",
