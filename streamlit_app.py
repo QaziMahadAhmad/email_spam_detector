@@ -18,15 +18,12 @@ st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 
 <style>
-/* ── Hide Streamlit chrome ── */
 #MainMenu, footer, header { visibility: hidden; }
 .block-container {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     max-width: 760px !important;
 }
-
-/* ── Root colors ── */
 :root {
     --bg:       #0a0a0f;
     --surface:  #111118;
@@ -38,15 +35,11 @@ st.markdown("""
     --spam-clr: #ff4d6d;
     --ham-clr:  #c8ff00;
 }
-
-/* ── Page background ── */
 .stApp {
     background-color: #0a0a0f !important;
     font-family: 'DM Mono', monospace !important;
     color: #e8e8f0 !important;
 }
-
-/* ── Header bar ── */
 .spamscan-header {
     display: flex;
     align-items: center;
@@ -55,11 +48,7 @@ st.markdown("""
     border-bottom: 1px solid rgba(255,255,255,0.06);
     margin-bottom: 44px;
 }
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+.logo { display: flex; align-items: center; gap: 12px; }
 .logo-icon {
     width: 38px; height: 38px;
     background: #c8ff00;
@@ -86,8 +75,6 @@ st.markdown("""
     text-transform: uppercase;
     font-family: 'DM Mono', monospace;
 }
-
-/* ── Headline ── */
 .headline {
     font-family: 'Syne', sans-serif;
     font-size: clamp(36px, 7vw, 56px);
@@ -106,8 +93,6 @@ st.markdown("""
     max-width: 480px;
     font-family: 'DM Mono', monospace;
 }
-
-/* ── Input card ── */
 .input-card {
     background: #111118;
     border: 1px solid rgba(255,255,255,0.07);
@@ -115,16 +100,6 @@ st.markdown("""
     padding: 24px 28px 20px;
     margin-bottom: 8px;
 }
-.card-label {
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: #6b6b80;
-    margin-bottom: 12px;
-    font-family: 'DM Mono', monospace;
-}
-
-/* ── Textarea styling ── */
 .stTextArea textarea {
     background: transparent !important;
     border: none !important;
@@ -143,8 +118,8 @@ st.markdown("""
 .stTextArea > div > div { background: transparent !important; border: none !important; }
 .stTextArea { margin-bottom: 0 !important; }
 
-/* ── Button ── */
-.stButton > button {
+/* Scan Email button - green */
+div[data-testid="column"]:first-child .stButton > button {
     background: #c8ff00 !important;
     color: #000 !important;
     font-family: 'Syne', sans-serif !important;
@@ -155,12 +130,28 @@ st.markdown("""
     padding: 12px 28px !important;
     width: 100% !important;
     letter-spacing: 0.3px !important;
-    transition: opacity 0.2s !important;
     margin-top: 8px !important;
 }
-.stButton > button:hover { opacity: 0.88 !important; }
+div[data-testid="column"]:first-child .stButton > button:hover { opacity: 0.88 !important; }
 
-/* ── Verdict boxes ── */
+/* Check Another Email button - outlined */
+div[data-testid="column"]:last-child .stButton > button {
+    background: transparent !important;
+    color: #6b6b80 !important;
+    font-family: 'DM Mono', monospace !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    border: 1px solid rgba(255,255,255,0.13) !important;
+    border-radius: 8px !important;
+    padding: 12px 28px !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+}
+div[data-testid="column"]:last-child .stButton > button:hover {
+    color: #e8e8f0 !important;
+    border-color: rgba(255,255,255,0.25) !important;
+}
+
 .verdict-spam {
     background: rgba(255,77,109,0.08);
     border: 1px solid rgba(255,77,109,0.2);
@@ -218,8 +209,6 @@ st.markdown("""
     letter-spacing: -1px;
     flex-shrink: 0;
 }
-
-/* ── Prob boxes ── */
 .prob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .prob-box {
     background: #111118;
@@ -229,12 +218,10 @@ st.markdown("""
 }
 .prob-label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: #6b6b80; margin-bottom: 10px; font-family: 'DM Mono', monospace; }
 .prob-bar-bg { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
-.prob-bar-spam { height: 100%; background: #ff4d6d; border-radius: 3px; transition: width 0.8s ease; }
-.prob-bar-ham  { height: 100%; background: #c8ff00; border-radius: 3px; transition: width 0.8s ease; }
+.prob-bar-spam { height: 100%; background: #ff4d6d; border-radius: 3px; }
+.prob-bar-ham  { height: 100%; background: #c8ff00; border-radius: 3px; }
 .prob-pct-spam { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: #ff4d6d; letter-spacing: -1px; }
 .prob-pct-ham  { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: #c8ff00; letter-spacing: -1px; }
-
-/* ── Stat boxes ── */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .stat-box {
     background: #111118;
@@ -244,8 +231,6 @@ st.markdown("""
 }
 .stat-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #6b6b80; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
 .stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: #fff; }
-
-/* ── Footer ── */
 .spamscan-footer {
     text-align: center;
     font-size: 11px;
@@ -255,15 +240,12 @@ st.markdown("""
     border-top: 1px solid rgba(255,255,255,0.06);
     font-family: 'DM Mono', monospace;
 }
-
-/* ── Hide Streamlit metric/progress defaults ── */
 [data-testid="stMetric"] { display: none; }
 div[data-testid="stProgress"] { display: none; }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Load / train model ────────────────────────────────────────────────────────
 @st.cache_resource
 def load_or_train_model():
     base       = os.path.dirname(__file__)
@@ -304,7 +286,7 @@ def load_or_train_model():
 
 model = load_or_train_model()
 
-# ── Header ────────────────────────────────────────────────────────────────────
+# Header
 st.markdown("""
 <div class="spamscan-header">
   <div class="logo">
@@ -320,27 +302,33 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ── Headline ──────────────────────────────────────────────────────────────────
+# Headline
 st.markdown("""
 <div class="headline">Is this email<br/><em>spam?</em></div>
 <div class="subline">Drop in any email and we'll tell you instantly — spam or not. Powered by machine learning trained on thousands of real messages.</div>
 """, unsafe_allow_html=True)
 
-# ── Input card ────────────────────────────────────────────────────────────────
-st.markdown('<div class="input-card"><div class="card-label">Email / Message</div>', unsafe_allow_html=True)
-
+# Input card — no label
+st.markdown('<div class="input-card">', unsafe_allow_html=True)
 email_input = st.text_area(
     "email",
     height=150,
     placeholder='Paste your email content here…\n\ne.g. "Congratulations! You have won a free iPhone. Click now to claim."',
     label_visibility="collapsed",
 )
-
 st.markdown('</div>', unsafe_allow_html=True)
 
-scan = st.button("🔍  Scan Email")
+# Buttons side by side
+col1, col2 = st.columns(2)
+with col1:
+    scan = st.button("🔍  Scan Email", use_container_width=True)
+with col2:
+    clear = st.button("↩  Check Another Email", use_container_width=True)
 
-# ── Result ────────────────────────────────────────────────────────────────────
+if clear:
+    st.rerun()
+
+# Result
 if scan:
     if not email_input.strip():
         st.markdown('<div style="color:#ff4d6d;font-size:13px;font-family:DM Mono,monospace;margin-top:8px">⚠ Please enter some text first.</div>', unsafe_allow_html=True)
@@ -351,7 +339,6 @@ if scan:
         ham_pct  = round(proba[classes.index("ham")]  * 100, 1)
         label    = "spam" if spam_pct > ham_pct else "ham"
 
-        # Verdict banner
         if label == "spam":
             st.markdown(f"""
             <div class="verdict-spam">
@@ -373,7 +360,6 @@ if scan:
               <div class="verdict-pct-ham">{ham_pct}%</div>
             </div>""", unsafe_allow_html=True)
 
-        # Probability bars
         st.markdown(f"""
         <div class="prob-grid">
           <div class="prob-box">
@@ -388,7 +374,6 @@ if scan:
           </div>
         </div>""", unsafe_allow_html=True)
 
-        # Stats
         word_count = len(email_input.split())
         char_count = len(email_input)
         st.markdown(f"""
@@ -407,7 +392,7 @@ if scan:
           </div>
         </div>""", unsafe_allow_html=True)
 
-# ── Footer ────────────────────────────────────────────────────────────────────
+# Footer
 st.markdown("""
 <div class="spamscan-footer">
   Built with <strong>Complement Naive Bayes</strong> + TF-IDF + Streamlit &nbsp;·&nbsp; scikit-learn
