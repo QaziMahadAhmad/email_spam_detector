@@ -317,7 +317,7 @@ email_input = st.text_area(
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Buttons side by side
-scan = st.button("?  Scan Email", use_container_width=True)
+scan = st.button("Scan Email", use_container_width=True)
 
 # Result
 if scan:
