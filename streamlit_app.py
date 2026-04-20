@@ -309,9 +309,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Input card — no label
-st.markdown('<div class="input-card">', unsafe_allow_html=True)
 email_input = st.text_area(
     "",
+    height=150,
     placeholder='Paste your email content here?\n\ne.g. "Congratulations! You have won a free iPhone. Click now to claim."',
 )
 st.markdown('</div>', unsafe_allow_html=True)
