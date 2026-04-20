@@ -7,8 +7,8 @@ from sklearn.naive_bayes import ComplementNB
 from sklearn.pipeline import Pipeline
 
 st.set_page_config(
-    page_title="SpamScan — Spam Detector",
-    page_icon="📧",
+    page_title="SpamScan ? Spam Detector",
+    page_icon="?",
     layout="centered",
 )
 
@@ -298,22 +298,22 @@ st.markdown("""
     </div>
     <span class="logo-text">Spam<span>Scan</span></span>
   </div>
-  <span class="badge">TF-IDF · Complement NB · v2.0</span>
+  <span class="badge">TF-IDF � Complement NB � v2.0</span>
 </div>
 """, unsafe_allow_html=True)
 
 # Headline
 st.markdown("""
 <div class="headline">Is this email<br/><em>spam?</em></div>
-<div class="subline">Drop in any email and we'll tell you instantly — spam or not. Powered by machine learning trained on thousands of real messages.</div>
+<div class="subline">Drop in any email and we'll tell you instantly ? spam or not. Powered by machine learning trained on thousands of real messages.</div>
 """, unsafe_allow_html=True)
 
-# Input card — no label
+# Input card ? no label
 st.markdown('<div class="input-card">', unsafe_allow_html=True)
 email_input = st.text_area(
     "email",
     height=150,
-    placeholder='Paste your email content here…\n\ne.g. "Congratulations! You have won a free iPhone. Click now to claim."',
+    placeholder='Paste your email content here?\n\ne.g. "Congratulations! You have won a free iPhone. Click now to claim."',
     label_visibility="collapsed",
 )
 st.markdown('</div>', unsafe_allow_html=True)
@@ -321,9 +321,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 # Buttons side by side
 col1, col2 = st.columns(2)
 with col1:
-    scan = st.button("🔍  Scan Email", use_container_width=True)
+    scan = st.button("?  Scan Email", use_container_width=True)
 with col2:
-    clear = st.button("↩  Check Another Email", use_container_width=True)
+    clear = st.button("?  Check Another Email", use_container_width=True)
 
 if clear:
     st.rerun()
@@ -331,7 +331,7 @@ if clear:
 # Result
 if scan:
     if not email_input.strip():
-        st.markdown('<div style="color:#ff4d6d;font-size:13px;font-family:DM Mono,monospace;margin-top:8px">⚠ Please enter some text first.</div>', unsafe_allow_html=True)
+        st.markdown('<div style="color:#ff4d6d;font-size:13px;font-family:DM Mono,monospace;margin-top:8px">? Please enter some text first.</div>', unsafe_allow_html=True)
     else:
         proba    = model.predict_proba([email_input])[0]
         classes  = list(model.classes_)
@@ -342,7 +342,7 @@ if scan:
         if label == "spam":
             st.markdown(f"""
             <div class="verdict-spam">
-              <div class="verdict-icon">🚨</div>
+              <div class="verdict-icon">?</div>
               <div class="verdict-info">
                 <div class="verdict-title-spam">SPAM DETECTED</div>
                 <div class="verdict-sub">This message shows strong spam characteristics.</div>
@@ -352,7 +352,7 @@ if scan:
         else:
             st.markdown(f"""
             <div class="verdict-ham">
-              <div class="verdict-icon">✅</div>
+              <div class="verdict-icon">?</div>
               <div class="verdict-info">
                 <div class="verdict-title-ham">NOT SPAM</div>
                 <div class="verdict-sub">This message appears to be a legitimate email.</div>
@@ -395,6 +395,6 @@ if scan:
 # Footer
 st.markdown("""
 <div class="spamscan-footer">
-  Built with <strong>Complement Naive Bayes</strong> + TF-IDF + Streamlit &nbsp;·&nbsp; scikit-learn
+  Built with <strong>Complement Naive Bayes</strong> + TF-IDF + Streamlit &nbsp;�&nbsp; scikit-learn
 </div>
 """, unsafe_allow_html=True)
