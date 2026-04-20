@@ -12,7 +12,7 @@ A machine learning web app that detects spam emails using **Complement Naive Bay
 
 ## 🚀 Live Demo
 
-👉 **[Try it here](https://your-app.streamlit.app)** ← replace with your Streamlit link
+👉 https://email-spam-detector-09.streamlit.app/
 
 ---
 
