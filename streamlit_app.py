@@ -312,15 +312,12 @@ st.markdown("""
 st.markdown('<div class="input-card">', unsafe_allow_html=True)
 email_input = st.text_area(
     "",
-    height=10,
     placeholder='Paste your email content here?\n\ne.g. "Congratulations! You have won a free iPhone. Click now to claim."',
 )
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Buttons side by side
 scan = st.button("?  Scan Email", use_container_width=True)
-if clear:
-    st.rerun()
 
 # Result
 if scan:
